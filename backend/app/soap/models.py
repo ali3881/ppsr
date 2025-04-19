@@ -60,3 +60,29 @@ class VehicleSearchResponse(BaseModel):
     search_results: Optional[Dict[str, Any]] = None
     written_off: Optional[bool] = None
     stolen: Optional[bool] = None
+
+class PaymentIntentRequest(BaseModel):
+    """Request model for creating a payment intent."""
+    search_id: str
+    search_type: VehicleSearchType
+    state: Optional[str] = None
+
+class PaymentIntentResponse(BaseModel):
+    """Response model for payment intent creation."""
+    client_secret: Optional[str] = None
+    payment_intent_id: Optional[str] = None
+    amount: Optional[int] = None
+    currency: Optional[str] = None
+    error: Optional[str] = None
+
+class PaymentConfirmationRequest(BaseModel):
+    """Request model for confirming a payment."""
+    payment_intent_id: str
+    search_id: str
+
+class PaymentConfirmationResponse(BaseModel):
+    """Response model for payment confirmation."""
+    confirmed: bool
+    status: str
+    search_id: str
+    error: Optional[str] = None

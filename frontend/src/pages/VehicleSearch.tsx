@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ppsr, VehicleSearchRequest, VehicleSearchResponse } from '../lib/api';
+import { 
+  ppsr, 
+  VehicleSearchRequest, 
+  VehicleSearchResponse,
+  PaymentIntentRequest,
+  PaymentConfirmationRequest
+} from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -11,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { AlertCircle, CheckCircle, AlertTriangle, Car, FileDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { PaymentModal } from '../components/payment/PaymentForm';
 
 const formSchema = z.object({
   search_type: z.enum(['VIN', 'Chassis', 'Registration']),
@@ -29,6 +36,13 @@ const VehicleSearchPage: React.FC = () => {
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<VehicleSearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentIntent, setPaymentIntent] = useState<{
+    clientSecret: string;
+    paymentIntentId: string;
+    amount: number;
+  } | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -73,6 +87,62 @@ const VehicleSearchPage: React.FC = () => {
     setError(null);
     
     try {
+      const request: PaymentIntentRequest = {
+        search_id: form.getValues().identifier,
+        search_type: form.getValues().search_type as 'VIN' | 'Chassis' | 'Registration',
+        state: form.getValues().state,
+      };
+      
+      const paymentResponse = await ppsr.createPaymentIntent(request);
+      
+      if (paymentResponse.error || !paymentResponse.client_secret || !paymentResponse.payment_intent_id) {
+        throw new Error(paymentResponse.error || 'Failed to create payment intent');
+      }
+      
+      setPaymentIntent({
+        clientSecret: paymentResponse.client_secret,
+        paymentIntentId: paymentResponse.payment_intent_id,
+        amount: paymentResponse.amount || 1000, // Default to $10.00
+      });
+      
+      setShowPaymentModal(true);
+    } catch (err: any) {
+      setError('Failed to initiate payment: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+  
+  const handlePaymentSuccess = async () => {
+    if (!paymentIntent || !form.getValues()) return;
+    
+    try {
+      const confirmRequest: PaymentConfirmationRequest = {
+        payment_intent_id: paymentIntent.paymentIntentId,
+        search_id: form.getValues().identifier,
+      };
+      
+      const confirmResponse = await ppsr.confirmPayment(confirmRequest);
+      
+      if (!confirmResponse.confirmed) {
+        throw new Error(`Payment confirmation failed: ${confirmResponse.status}`);
+      }
+      
+      downloadPdf();
+    } catch (err: any) {
+      setError('Payment confirmation failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setShowPaymentModal(false);
+    }
+  };
+  
+  const downloadPdf = async () => {
+    if (!form.getValues()) return;
+    
+    setIsPdfLoading(true);
+    setError(null);
+    
+    try {
       const request: VehicleSearchRequest = {
         search_type: form.getValues().search_type as 'VIN' | 'Chassis' | 'Registration',
         identifier: form.getValues().identifier,
@@ -91,7 +161,12 @@ const VehicleSearchPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      setError('Failed to generate PDF report: ' + (err.message || 'Unknown error'));
+      if (err.response && err.response.status === 402) {
+        setError('Payment is required to download this PDF.');
+        handleDownloadPdf(); // Try again to create a payment intent
+      } else {
+        setError('Failed to download PDF report: ' + (err.message || 'Unknown error'));
+      }
     } finally {
       setIsPdfLoading(false);
     }
@@ -326,6 +401,20 @@ const VehicleSearchPage: React.FC = () => {
           )}
         </div>
       </div>
+      
+      {/* Payment Modal */}
+      {showPaymentModal && paymentIntent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <PaymentModal
+            clientSecret={paymentIntent.clientSecret}
+            paymentIntentId={paymentIntent.paymentIntentId}
+            amount={paymentIntent.amount}
+            searchId={form.getValues().identifier}
+            onPaymentSuccess={handlePaymentSuccess}
+            onCancel={() => setShowPaymentModal(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

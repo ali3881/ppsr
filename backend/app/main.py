@@ -3,15 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import psycopg
 import os
+import stripe
 from datetime import datetime
 from typing import Dict, Any
 
 from app.soap.models import (
     ChangePasswordRequest, ChangePasswordResponse, 
-    VehicleSearchRequest, VehicleSearchResponse, VehicleSearchType
+    VehicleSearchRequest, VehicleSearchResponse, VehicleSearchType,
+    PaymentIntentRequest, PaymentIntentResponse,
+    PaymentConfirmationRequest, PaymentConfirmationResponse
 )
 from app.soap.client import ppsr_client
 from app.utils.pdf_generator import generate_vehicle_search_pdf, generate_temp_pdf_path
+from app.utils.stripe_utils import create_payment_intent, confirm_payment, verify_payment
 
 app = FastAPI()
 
@@ -69,6 +73,41 @@ async def search_vehicle(request: VehicleSearchRequest):
     
     return response
 
+@app.post("/api/ppsr/payment/create-intent", response_model=PaymentIntentResponse)
+async def create_payment_intent_endpoint(request: PaymentIntentRequest):
+    """
+    Create a payment intent for a PDF download.
+    
+    This endpoint creates a Stripe payment intent for the specified search,
+    which can be used to process a payment before downloading the PDF.
+    """
+    metadata = {
+        "search_type": request.search_type,
+        "state": request.state
+    }
+    
+    result = create_payment_intent(request.search_id, metadata)
+    
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    
+    return result
+
+@app.post("/api/ppsr/payment/confirm", response_model=PaymentConfirmationResponse)
+async def confirm_payment_endpoint(request: PaymentConfirmationRequest):
+    """
+    Confirm a payment for a PDF download.
+    
+    This endpoint verifies that a payment has been completed successfully
+    before allowing the PDF to be downloaded.
+    """
+    result = confirm_payment(request.payment_intent_id, request.search_id)
+    
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    
+    return result
+
 @app.post("/api/ppsr/search/vehicle/pdf", response_class=FileResponse)
 async def generate_vehicle_search_pdf_endpoint(
     request: VehicleSearchRequest,
@@ -79,7 +118,15 @@ async def generate_vehicle_search_pdf_endpoint(
     
     Returns a downloadable PDF file with the search results formatted
     similar to the official PPSR search certificates.
+    
+    Requires a successful payment before the PDF can be downloaded.
     """
+    if not verify_payment(request.identifier):
+        raise HTTPException(
+            status_code=402,  # Payment Required
+            detail="Payment is required to download this PDF"
+        )
+    
     response = ppsr_client.search_vehicle(request)
     
     if not response.success:
