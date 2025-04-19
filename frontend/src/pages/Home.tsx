@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +26,7 @@ type SearchFormValues = z.infer<typeof searchFormSchema>;
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [autoSearchEnabled, setAutoSearchEnabled] = useState(true);
   
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
@@ -37,10 +38,49 @@ const HomePage: React.FC = () => {
   });
 
   const searchType = form.watch('search_type');
+  const identifier = form.watch('identifier');
+  const state = form.watch('state');
+  
+  const useDebounce = (value: any, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+      
+      return () => {
+        clearTimeout(handler);
+      };
+    }, [value, delay]);
+    
+    return debouncedValue;
+  };
+  
+  const debouncedIdentifier = useDebounce(identifier, 800);
+  const debouncedState = useDebounce(state, 800);
+  
+  useEffect(() => {
+    if (!autoSearchEnabled || !debouncedIdentifier || debouncedIdentifier.length < 3) return;
+    
+    const isValid = form.formState.isValid;
+    const isRegistration = searchType === 'Registration';
+    
+    if (isRegistration && (!debouncedState || debouncedState.length === 0)) return;
+    
+    if (isValid && !isLoading) {
+      const values = form.getValues();
+      onSubmit(values);
+    }
+  }, [debouncedIdentifier, debouncedState, searchType, form.formState.isValid, isLoading, autoSearchEnabled]);
   
   const onSubmit = (values: SearchFormValues) => {
     setIsLoading(true);
     navigate(`/vehicle-search?search_type=${values.search_type}&identifier=${values.identifier}&state=${values.state || ''}`);
+    
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   };
   
   return (
@@ -165,10 +205,13 @@ const HomePage: React.FC = () => {
                     )}
                   </div>
                   
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm text-gray-500">
+                      <p className="italic">Start typing to search automatically</p>
+                    </div>
                     <Button 
                       type="submit" 
-                      className="w-full md:w-auto"
+                      className="w-auto opacity-70 hover:opacity-100"
                       disabled={isLoading}
                     >
                       <Search className="mr-2 h-4 w-4" />
