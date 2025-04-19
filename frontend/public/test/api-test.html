@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPSR API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>PPSR API Test Page</h1>
+    <p>This page tests direct API connectivity to the PPSR backend.</p>
+    
+    <div>
+        <h2>Test 1: Direct API Call (No CORS)</h2>
+        <button id="testDirectApi">Test Direct API</button>
+        <div id="directApiResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div>
+        <h2>Test 2: API Call with Credentials</h2>
+        <button id="testApiWithCredentials">Test API with Credentials</button>
+        <div id="apiWithCredentialsResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div>
+        <h2>Test 3: Check Browser Information</h2>
+        <button id="testBrowserInfo">Show Browser Info</button>
+        <div id="browserInfoResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div>
+        <h2>Test 4: Network Connectivity</h2>
+        <button id="testNetworkConnectivity">Test Network Connectivity</button>
+        <div id="networkConnectivityResult" class="result">Results will appear here...</div>
+    </div>
+
+    <script>
+        // Test 1: Direct API Call
+        document.getElementById('testDirectApi').addEventListener('click', async () => {
+            const resultElement = document.getElementById('directApiResult');
+            resultElement.innerHTML = 'Testing direct API call...';
+            
+            try {
+                const response = await fetch('https://ppsr-soap-client-tunnel-6v8a94s5.devinapps.com/api/healthz');
+                const data = await response.json();
+                
+                resultElement.innerHTML = `<span class="success">Success!</span>\nAPI Response: ${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultElement.innerHTML = `<span class="error">Error!</span>\n${error.message}`;
+                console.error('Direct API error:', error);
+            }
+        });
+        
+        // Test 2: API Call with Credentials
+        document.getElementById('testApiWithCredentials').addEventListener('click', async () => {
+            const resultElement = document.getElementById('apiWithCredentialsResult');
+            resultElement.innerHTML = 'Testing API call with credentials...';
+            
+            try {
+                const response = await fetch('https://ppsr-soap-client-tunnel-6v8a94s5.devinapps.com/api/ppsr/status', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa('user:59ae75b8695daab37e4a75543176b593')
+                    }
+                });
+                const data = await response.json();
+                
+                resultElement.innerHTML = `<span class="success">Success!</span>\nAPI Response: ${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultElement.innerHTML = `<span class="error">Error!</span>\n${error.message}`;
+                console.error('API with credentials error:', error);
+            }
+        });
+        
+        // Test 3: Browser Information
+        document.getElementById('testBrowserInfo').addEventListener('click', () => {
+            const resultElement = document.getElementById('browserInfoResult');
+            
+            const browserInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookiesEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                onLine: navigator.onLine,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                pixelRatio: window.devicePixelRatio
+            };
+            
+            resultElement.innerHTML = JSON.stringify(browserInfo, null, 2);
+        });
+        
+        // Test 4: Network Connectivity
+        document.getElementById('testNetworkConnectivity').addEventListener('click', async () => {
+            const resultElement = document.getElementById('networkConnectivityResult');
+            resultElement.innerHTML = 'Testing network connectivity...';
+            
+            const testUrls = [
+                'https://www.google.com',
+                'https://www.cloudflare.com',
+                'https://ppsr-soap-client-u0iqe4q3.devinapps.com',
+                'https://ppsr-soap-client-tunnel-6v8a94s5.devinapps.com'
+            ];
+            
+            const results = {};
+            
+            for (const url of testUrls) {
+                try {
+                    const startTime = performance.now();
+                    const response = await fetch(url, { mode: 'no-cors' });
+                    const endTime = performance.now();
+                    
+                    results[url] = {
+                        status: 'Connected',
+                        time: `${(endTime - startTime).toFixed(2)}ms`
+                    };
+                } catch (error) {
+                    results[url] = {
+                        status: 'Failed',
+                        error: error.message
+                    };
+                }
+            }
+            
+            resultElement.innerHTML = JSON.stringify(results, null, 2);
+        });
+    </script>
+</body>
+</html>
