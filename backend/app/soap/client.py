@@ -10,6 +10,7 @@ from requests import Session
 import requests.adapters
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+import os
 
 from .config import soap_config
 from .models import (
@@ -19,6 +20,8 @@ from .models import (
     SoapFault,
     SoapError
 )
+
+from .mock_service import mock_ppsr_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -113,6 +116,23 @@ class PPSRSoapClient:
         Returns:
             ChangePasswordResponse: Result of the password change operation
         """
+        use_mock = os.getenv("USE_MOCK_SERVICE", "true").lower() == "true"
+        
+        if use_mock:
+            logger.info("Using mock PPSR service for testing")
+            response = mock_ppsr_service.change_b2g_password(
+                account_number=request.account_number,
+                username=request.username,
+                current_password=request.current_password,
+                new_password=request.new_password
+            )
+            
+            if response.success:
+                self.last_password_change = datetime.utcnow()
+                self.clients = {}  # Clear clients to force recreation with new credentials
+            
+            return response
+        
         try:
             client = self._get_client(
                 'register_operations',
