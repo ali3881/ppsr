@@ -1,6 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg
+from typing import Dict, Any
+
+from app.soap.models import ChangePasswordRequest, ChangePasswordResponse
+from app.soap.client import ppsr_client
 
 app = FastAPI()
 
@@ -16,3 +20,29 @@ app.add_middleware(
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
+
+@app.post("/api/ppsr/change-password", response_model=ChangePasswordResponse)
+async def change_password(request: ChangePasswordRequest):
+    """
+    Change the B2G password for PPSR.
+    
+    This is the first operation that must be performed with the initial credentials
+    before any other operations can be accessed.
+    """
+    response = ppsr_client.change_password(request)
+    
+    if not response.success:
+        raise HTTPException(status_code=400, detail=response.message)
+    
+    return response
+
+@app.get("/api/ppsr/status")
+async def ppsr_status():
+    """Get the status of the PPSR B2G connection."""
+    password_expiring = ppsr_client.check_password_expiry()
+    
+    return {
+        "status": "connected",
+        "password_expiring": password_expiring,
+        "message": "Password needs to be changed soon" if password_expiring else "Connection is healthy"
+    }

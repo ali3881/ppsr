@@ -9,6 +9,10 @@ readme = "README.md"
 python = "^3.12"
 fastapi = {extras = ["standard"], version = "^0.115.12"}
 psycopg = {extras = ["binary"], version = "^3.2.6"}
+zeep = "^4.2.1"
+requests = "^2.31.0"
+python-dotenv = "^1.0.1"
+pydantic = "^2.6.3"
 
 
 [build-system]

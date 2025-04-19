@@ -1,0 +1,39 @@
+"""
+Data models for the PPSR B2G SOAP client.
+"""
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+
+class B2GCredentials(BaseModel):
+    """B2G credentials model."""
+    account_number: str
+    username: str
+    password: str
+
+class ChangePasswordRequest(BaseModel):
+    """Request model for changing B2G password."""
+    account_number: str
+    username: str
+    current_password: str
+    new_password: str
+
+class ChangePasswordResponse(BaseModel):
+    """Response model for change password operation."""
+    success: bool
+    message: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    error_details: Optional[Dict[str, Any]] = None
+
+class SoapFault(BaseModel):
+    """Model for SOAP fault details."""
+    fault_code: str
+    fault_string: str
+    fault_actor: Optional[str] = None
+    detail: Optional[Dict[str, Any]] = None
+
+class SoapError(Exception):
+    """Exception for SOAP errors."""
+    def __init__(self, fault: SoapFault):
+        self.fault = fault
+        super().__init__(fault.fault_string)
