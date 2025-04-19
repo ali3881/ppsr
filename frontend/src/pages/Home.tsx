@@ -160,30 +160,21 @@ const HomePage: React.FC = () => {
                       />
                     ) : (
                       <div className="flex items-end">
-                        <Button 
-                          type="submit" 
-                          className="w-full"
-                          disabled={isLoading}
-                        >
-                          <Search className="mr-2 h-4 w-4" />
-                          {isLoading ? 'Searching...' : 'Search Vehicle'}
-                        </Button>
+                        <div className="w-full opacity-0">Placeholder</div>
                       </div>
                     )}
                   </div>
                   
-                  {searchType === 'Registration' && (
-                    <div className="flex justify-end mt-2">
-                      <Button 
-                        type="submit" 
-                        className="w-full md:w-auto"
-                        disabled={isLoading}
-                      >
-                        <Search className="mr-2 h-4 w-4" />
-                        {isLoading ? 'Searching...' : 'Search Vehicle'}
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex justify-end mt-4">
+                    <Button 
+                      type="submit" 
+                      className="w-full md:w-auto"
+                      disabled={isLoading}
+                    >
+                      <Search className="mr-2 h-4 w-4" />
+                      {isLoading ? 'Searching...' : 'Search Vehicle'}
+                    </Button>
+                  </div>
                   
                   <div className="text-xs text-gray-500 mt-2">
                     <p>Test VINs: WBAAL31090FW12345 (BMW), JN1TANT31U0123456 (Nissan), WAUZZZ8K9DA123456 (Audi)</p>
