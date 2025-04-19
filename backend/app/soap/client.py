@@ -7,6 +7,7 @@ import zeep
 from zeep.transports import Transport
 from zeep.wsse.username import UsernameToken
 from requests import Session
+import requests.adapters
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
@@ -42,12 +43,15 @@ class PPSRSoapClient:
         """Configure TLS settings for secure communication."""
         self.session = Session()
         
-        self.session.mount('https://', Transport(
+        self.session.verify = True
+        
+        adapter = requests.adapters.HTTPAdapter()
+        self.session.mount('https://', adapter)
+        
+        self.transport = Transport(
             session=self.session,
-            operation_timeout=self.config.timeout,
-            ssl_version=ssl.PROTOCOL_TLSv1_2,
-            ssl_ciphers=self.config.cipher_suites
-        ))
+            operation_timeout=self.config.timeout
+        )
     
     def _get_client(self, service_name: str, credentials: Optional[B2GCredentials] = None):
         """
