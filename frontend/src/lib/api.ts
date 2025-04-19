@@ -57,5 +57,12 @@ export const ppsr = {
   searchVehicle: async (data: VehicleSearchRequest): Promise<VehicleSearchResponse> => {
     const response = await api.post<VehicleSearchResponse>('/api/ppsr/search/vehicle', data);
     return response.data;
+  },
+  
+  downloadVehiclePdf: async (data: VehicleSearchRequest): Promise<Blob> => {
+    const response = await api.post('/api/ppsr/search/vehicle/pdf', data, {
+      responseType: 'blob'
+    });
+    return response.data;
   }
 };

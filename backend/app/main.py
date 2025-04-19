@@ -1,6 +1,9 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 import psycopg
+import os
+from datetime import datetime
 from typing import Dict, Any
 
 from app.soap.models import (
@@ -8,6 +11,7 @@ from app.soap.models import (
     VehicleSearchRequest, VehicleSearchResponse, VehicleSearchType
 )
 from app.soap.client import ppsr_client
+from app.utils.pdf_generator import generate_vehicle_search_pdf, generate_temp_pdf_path
 
 app = FastAPI()
 
@@ -64,3 +68,43 @@ async def search_vehicle(request: VehicleSearchRequest):
         raise HTTPException(status_code=400, detail=response.message)
     
     return response
+
+@app.post("/api/ppsr/search/vehicle/pdf", response_class=FileResponse)
+async def generate_vehicle_search_pdf_endpoint(
+    request: VehicleSearchRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Generate a PDF report for a vehicle search.
+    
+    Returns a downloadable PDF file with the search results formatted
+    similar to the official PPSR search certificates.
+    """
+    response = ppsr_client.search_vehicle(request)
+    
+    if not response.success:
+        raise HTTPException(status_code=400, detail=response.message)
+    
+    pdf_path = generate_temp_pdf_path(request.identifier)
+    
+    search_data = {
+        "search_type": request.search_type,
+        "identifier": request.identifier,
+        "state": request.state if request.search_type == VehicleSearchType.REGISTRATION else None,
+        "certificate_number": f"{int(datetime.now().timestamp())}",
+        "search_number": f"{int(datetime.now().timestamp()/100)}",
+        "search_results": response.search_results,
+        "written_off": response.written_off,
+        "stolen": response.stolen
+    }
+    
+    pdf_path = generate_vehicle_search_pdf(search_data, pdf_path)
+    
+    background_tasks.add_task(lambda: os.unlink(pdf_path) if os.path.exists(pdf_path) else None)
+    
+    return FileResponse(
+        path=pdf_path,
+        filename=f"ppsr_vehicle_search_{request.identifier}.pdf",
+        media_type="application/pdf",
+        background=background_tasks
+    )

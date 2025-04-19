@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { AlertCircle, CheckCircle, AlertTriangle, Car } from 'lucide-react';
+import { AlertCircle, CheckCircle, AlertTriangle, Car, FileDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 
 const formSchema = z.object({
@@ -26,6 +26,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const VehicleSearchPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<VehicleSearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +63,37 @@ const VehicleSearchPage: React.FC = () => {
       setError(err.response?.data?.detail || err.message || 'An error occurred');
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const handleDownloadPdf = async () => {
+    if (!searchResult || !form.getValues()) return;
+    
+    setIsPdfLoading(true);
+    setError(null);
+    
+    try {
+      const request: VehicleSearchRequest = {
+        search_type: form.getValues().search_type as 'VIN' | 'Chassis' | 'Registration',
+        identifier: form.getValues().identifier,
+        state: form.getValues().state,
+      };
+      
+      const blob = await ppsr.downloadVehiclePdf(request);
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ppsr_vehicle_search_${request.identifier}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      setError('Failed to generate PDF report: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsPdfLoading(false);
     }
   };
 
@@ -201,10 +233,22 @@ const VehicleSearchPage: React.FC = () => {
           {searchResult && searchResult.success && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Car className="mr-2 h-5 w-5" />
-                  Search Results
-                </CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center">
+                    <Car className="mr-2 h-5 w-5" />
+                    Search Results
+                  </CardTitle>
+                  <Button 
+                    onClick={handleDownloadPdf}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center"
+                    disabled={isPdfLoading}
+                  >
+                    <FileDown className="mr-2 h-4 w-4" />
+                    {isPdfLoading ? 'Generating PDF...' : 'Download PDF Report'}
+                  </Button>
+                </div>
                 <CardDescription>
                   Results for {searchType}: {form.getValues().identifier}
                 </CardDescription>
