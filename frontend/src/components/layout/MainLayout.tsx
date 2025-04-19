@@ -17,7 +17,10 @@ const MainLayout: React.FC = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <Link to="/" className="text-2xl font-bold">PPSR B2G Portal</Link>
+              <Link to="/" className="flex items-center">
+                <img src="/images/ppsr-logo.jpg" alt="PPSR Security Check" className="h-10 mr-2" />
+                <span className="text-2xl font-bold">B2G Portal</span>
+              </Link>
             </div>
             
             <NavigationMenu>
