@@ -95,6 +95,7 @@ const VehicleSearchPage: React.FC = () => {
     } catch (err: any) {
       if (err.response?.status === 402) {
         setShowPaymentForm(true);
+        setError('Payment required: You need to complete payment to download this PDF report. Click the "Download PDF Report" button to initiate payment.');
       } else {
         setError('Failed to generate PDF report: ' + (err.message || 'Unknown error'));
       }
