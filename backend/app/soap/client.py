@@ -36,22 +36,6 @@ class PPSRSoapClient:
         self.config = config
         self.clients = {}
         self.last_password_change = None
-        
-        self._configure_tls()
-        
-    def _configure_tls(self):
-        """Configure TLS settings for secure communication."""
-        self.session = Session()
-        
-        self.session.verify = True
-        
-        adapter = requests.adapters.HTTPAdapter()
-        self.session.mount('https://', adapter)
-        
-        self.transport = Transport(
-            session=self.session,
-            operation_timeout=self.config.timeout
-        )
     
     def _get_client(self, service_name: str, credentials: Optional[B2GCredentials] = None):
         """
@@ -80,6 +64,11 @@ class PPSRSoapClient:
         
         wsdl_url = self.config.wsdl_urls[service_name]
         
+        session = Session()
+        session.verify = True
+        
+        transport = Transport(session=session, timeout=self.config.timeout)
+        
         wsse = UsernameToken(
             username=creds.username,
             password=creds.password,
@@ -88,7 +77,7 @@ class PPSRSoapClient:
         
         client = zeep.Client(
             wsdl=wsdl_url,
-            transport=self.session,
+            transport=transport,
             wsse=wsse
         )
         
