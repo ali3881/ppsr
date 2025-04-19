@@ -3,11 +3,15 @@ import { ppsr, StatusResponse } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Button } from '../components/ui/button';
-import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+interface ExtendedStatusResponse extends StatusResponse {
+  password_auto_changed?: boolean;
+}
+
 const StatusPage: React.FC = () => {
-  const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [status, setStatus] = useState<ExtendedStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +76,17 @@ const StatusPage: React.FC = () => {
                     <p className="text-gray-500">{status.message}</p>
                   </div>
                 </div>
+                
+                {status.password_auto_changed && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <Key className="h-5 w-5 text-green-600" />
+                    <AlertTitle className="text-green-800">Password Automatically Updated</AlertTitle>
+                    <AlertDescription className="text-green-700">
+                      Your B2G password has been automatically changed for seamless access.
+                      No further action is required.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 
                 {status.password_expiring && (
                   <Alert className="bg-yellow-50 border-yellow-200">

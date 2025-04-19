@@ -38,12 +38,22 @@ class PpsrController extends Controller
     
     public function getStatus()
     {
+        $auto_change_result = $this->ppsr_client->autoChangePassword();
+        
         $password_expiring = $this->ppsr_client->checkPasswordExpiry();
+        
+        $message = 'Connection is healthy';
+        if ($auto_change_result['success'] && isset($auto_change_result['password_changed']) && $auto_change_result['password_changed']) {
+            $message = 'Password automatically changed for seamless access';
+        } elseif ($password_expiring) {
+            $message = 'Password needs to be changed soon';
+        }
         
         return response()->json([
             'status' => 'connected',
             'password_expiring' => $password_expiring,
-            'message' => $password_expiring ? 'Password needs to be changed soon' : 'Connection is healthy'
+            'message' => $message,
+            'password_auto_changed' => $auto_change_result['success'] && isset($auto_change_result['password_changed']) && $auto_change_result['password_changed']
         ]);
     }
     

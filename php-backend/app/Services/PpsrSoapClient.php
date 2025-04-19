@@ -142,6 +142,57 @@ class PpsrSoapClient
         return $days_until_expiry < 7;
     }
     
+    public function autoChangePassword()
+    {
+        $using_initial_password = $this->config->password === '7V9RDKXHMWCR';
+        
+        if (!$using_initial_password) {
+            return [
+                'success' => true,
+                'message' => 'Password already changed',
+                'timestamp' => Carbon::now()->toIso8601String(),
+                'password_changed' => false
+            ];
+        }
+        
+        $new_password = 'NewPassword123!';
+        
+        $request = new \stdClass();
+        $request->account_number = $this->config->account_number;
+        $request->username = $this->config->username;
+        $request->current_password = $this->config->password;
+        $request->new_password = $new_password;
+        
+        $result = $this->changePassword($request);
+        
+        if ($result['success']) {
+            $this->config->password = $new_password;
+            
+            $this->updateEnvFile('PPSR_PASSWORD', $new_password);
+            
+            $result['password_changed'] = true;
+        }
+        
+        return $result;
+    }
+    
+    private function updateEnvFile($key, $value)
+    {
+        $path = base_path('.env');
+        
+        if (file_exists($path)) {
+            $escaped_value = str_replace('"', '\"', $value);
+            file_put_contents(
+                $path, 
+                preg_replace(
+                    "/^{$key}=.*/m",
+                    "{$key}=\"{$escaped_value}\"",
+                    file_get_contents($path)
+                )
+            );
+        }
+    }
+    
     public function searchVehicle($request)
     {
         if (env('USE_MOCK_SERVICE', true)) {
