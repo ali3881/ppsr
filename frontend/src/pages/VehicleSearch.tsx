@@ -381,9 +381,80 @@ const VehicleSearchPage: React.FC = () => {
                     {/* Additional details section */}
                     <div className="mt-6">
                       <h3 className="font-medium text-gray-900 mb-2">Additional Details</h3>
-                      <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto">
-                        {JSON.stringify(searchResult.search_results, null, 2)}
-                      </pre>
+                      <div className="bg-blue-50 p-6 rounded-lg shadow-sm border border-blue-100">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">Make:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">{searchResult.search_results?.make}</span>
+                            </div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">Model:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">{searchResult.search_results?.model}</span>
+                            </div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">Year:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">{searchResult.search_results?.year}</span>
+                            </div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">Color:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">{searchResult.search_results?.color}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">Engine Number:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">{searchResult.search_results?.engine_number}</span>
+                            </div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">Registration:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">{searchResult.search_results?.registration}</span>
+                            </div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">State:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">{searchResult.search_results?.state}</span>
+                            </div>
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-blue-700">Encumbered:</span>
+                              <span className="ml-2 text-gray-800 font-semibold">
+                                {searchResult.search_results?.encumbered ? 'Yes' : 'No'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {searchResult.search_results?.encumbered && searchResult.search_results?.encumbrance_details && (
+                          <div className="mt-4 pt-4 border-t border-blue-200">
+                            <h4 className="font-medium text-blue-800 mb-3">Encumbrance Details</h4>
+                            {searchResult.search_results.encumbrance_details.map((detail: any, index: number) => (
+                              <div key={index} className="bg-white p-4 rounded-md mb-2 shadow-sm">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <div className="mb-2">
+                                      <span className="text-xs font-medium text-blue-700">Registration Number:</span>
+                                      <span className="ml-2 text-gray-800">{detail.registration_number}</span>
+                                    </div>
+                                    <div className="mb-2">
+                                      <span className="text-xs font-medium text-blue-700">Registration Date:</span>
+                                      <span className="ml-2 text-gray-800">{detail.registration_date}</span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="mb-2">
+                                      <span className="text-xs font-medium text-blue-700">Secured Party:</span>
+                                      <span className="ml-2 text-gray-800">{detail.secured_party}</span>
+                                    </div>
+                                    <div className="mb-2">
+                                      <span className="text-xs font-medium text-blue-700">Address:</span>
+                                      <span className="ml-2 text-gray-800">{detail.address}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
