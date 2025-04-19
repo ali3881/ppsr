@@ -20,6 +20,22 @@ export interface StatusResponse {
   message: string;
 }
 
+export interface VehicleSearchRequest {
+  search_type: 'VIN' | 'Chassis' | 'Registration';
+  identifier: string;
+  state?: string;
+}
+
+export interface VehicleSearchResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  error_details?: Record<string, any> | null;
+  search_results?: Record<string, any> | null;
+  written_off?: boolean;
+  stolen?: boolean;
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
@@ -35,6 +51,11 @@ export const ppsr = {
   
   getStatus: async (): Promise<StatusResponse> => {
     const response = await api.get<StatusResponse>('/api/ppsr/status');
+    return response.data;
+  },
+  
+  searchVehicle: async (data: VehicleSearchRequest): Promise<VehicleSearchResponse> => {
+    const response = await api.post<VehicleSearchResponse>('/api/ppsr/search/vehicle', data);
     return response.data;
   }
 };

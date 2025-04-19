@@ -4,6 +4,7 @@ Data models for the PPSR B2G SOAP client.
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from enum import Enum
 
 class B2GCredentials(BaseModel):
     """B2G credentials model."""
@@ -37,3 +38,25 @@ class SoapError(Exception):
     def __init__(self, fault: SoapFault):
         self.fault = fault
         super().__init__(fault.fault_string)
+
+class VehicleSearchType(str, Enum):
+    """Types of vehicle searches."""
+    VIN = "VIN"
+    CHASSIS = "Chassis"
+    REGISTRATION = "Registration"
+
+class VehicleSearchRequest(BaseModel):
+    """Request model for vehicle search operations."""
+    search_type: VehicleSearchType
+    identifier: str
+    state: Optional[str] = None  # Required for registration searches
+
+class VehicleSearchResponse(BaseModel):
+    """Response model for vehicle search operations."""
+    success: bool
+    message: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    error_details: Optional[Dict[str, Any]] = None
+    search_results: Optional[Dict[str, Any]] = None
+    written_off: Optional[bool] = None
+    stolen: Optional[bool] = None

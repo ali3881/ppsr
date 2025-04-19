@@ -4,6 +4,7 @@ import MainLayout from './components/layout/MainLayout';
 import HomePage from './pages/Home';
 import ChangePasswordPage from './pages/ChangePassword';
 import StatusPage from './pages/Status';
+import VehicleSearchPage from './pages/VehicleSearch';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route path="status" element={<StatusPage />} />
+          <Route path="vehicle-search" element={<VehicleSearchPage />} />
         </Route>
       </Routes>
     </Router>

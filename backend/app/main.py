@@ -3,7 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import psycopg
 from typing import Dict, Any
 
-from app.soap.models import ChangePasswordRequest, ChangePasswordResponse
+from app.soap.models import (
+    ChangePasswordRequest, ChangePasswordResponse, 
+    VehicleSearchRequest, VehicleSearchResponse, VehicleSearchType
+)
 from app.soap.client import ppsr_client
 
 app = FastAPI()
@@ -46,3 +49,18 @@ async def ppsr_status():
         "password_expiring": password_expiring,
         "message": "Password needs to be changed soon" if password_expiring else "Connection is healthy"
     }
+
+@app.post("/api/ppsr/search/vehicle", response_model=VehicleSearchResponse)
+async def search_vehicle(request: VehicleSearchRequest):
+    """
+    Search for vehicle by VIN, Chassis, or Registration number.
+    
+    Returns vehicle details including written-off status, stolen status, and other 
+    information available in the PPSR.
+    """
+    response = ppsr_client.search_vehicle(request)
+    
+    if not response.success:
+        raise HTTPException(status_code=400, detail=response.message)
+    
+    return response

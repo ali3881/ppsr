@@ -52,6 +52,19 @@ const MainLayout: React.FC = () => {
                           </Link>
                         </NavigationMenuLink>
                       </li>
+                      <li>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            to="/vehicle-search"
+                            className="block select-none space-y-1 rounded-md p-3 hover:bg-blue-100 hover:text-blue-600"
+                          >
+                            <div className="text-sm font-medium">Vehicle Search</div>
+                            <p className="text-sm text-gray-500">
+                              Search for vehicle by VIN, chassis, or registration
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -105,6 +118,7 @@ const MainLayout: React.FC = () => {
                 <li><Link to="/" className="text-gray-300 hover:text-white">Home</Link></li>
                 <li><Link to="/change-password" className="text-gray-300 hover:text-white">Change Password</Link></li>
                 <li><Link to="/status" className="text-gray-300 hover:text-white">Connection Status</Link></li>
+                <li><Link to="/vehicle-search" className="text-gray-300 hover:text-white">Vehicle Search</Link></li>
               </ul>
             </div>
             <div>

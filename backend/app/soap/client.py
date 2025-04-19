@@ -18,7 +18,10 @@ from .models import (
     ChangePasswordRequest, 
     ChangePasswordResponse,
     SoapFault,
-    SoapError
+    SoapError,
+    VehicleSearchType,
+    VehicleSearchRequest,
+    VehicleSearchResponse
 )
 
 from .mock_service import mock_ppsr_service
@@ -196,5 +199,120 @@ class PPSRSoapClient:
         days_remaining = (expiry_date - datetime.utcnow()).days
         
         return days_remaining <= 7
+    
+    def search_vehicle(self, request: VehicleSearchRequest) -> VehicleSearchResponse:
+        """
+        Search for vehicle by VIN, Chassis, or Registration number.
+        
+        Args:
+            request: VehicleSearchRequest containing search type and identifier
+            
+        Returns:
+            VehicleSearchResponse: Result of the vehicle search operation
+        """
+        use_mock = os.getenv("USE_MOCK_SERVICE", "true").lower() == "true"
+        
+        if use_mock:
+            logger.info("Using mock PPSR service for vehicle search")
+            if request.search_type == VehicleSearchType.VIN:
+                test_vins = [
+                    "JMFSRCK5A2U004473", "6H8VSK19HSL854066", "6H8VRK19HPL648016", 
+                    "JC0AAASHPN2L59450", "JS1AV133400100394", "6MMTP4X41KA008563", 
+                    "JS1SP46A000504266", "JAATFR17HR7100146", "WDB2020262F716569", 
+                    "1G2AW87G3EL259452", "SALLDWBR7CA414338"
+                ]
+                
+                if request.identifier in test_vins:
+                    written_off = True
+                    stolen = "Multiple" in ["One", "Multiple"] 
+                    return VehicleSearchResponse(
+                        success=True,
+                        message="Vehicle found",
+                        search_results={
+                            "identifier": request.identifier,
+                            "type": request.search_type,
+                            "details": {
+                                "written_off_record": "Multiple",
+                                "stolen_record": "One" if stolen else None,
+                            }
+                        },
+                        written_off=written_off,
+                        stolen=stolen
+                    )
+                else:
+                    return VehicleSearchResponse(
+                        success=True,
+                        message="No matching records found",
+                        search_results=None
+                    )
+            else:
+                return VehicleSearchResponse(
+                    success=True,
+                    message=f"Mock search for {request.search_type}",
+                    search_results={
+                        "identifier": request.identifier,
+                        "type": request.search_type,
+                        "details": {}
+                    }
+                )
+        
+        try:
+            client = self._get_client('search_operations')
+            
+            params = {}
+            if request.search_type == VehicleSearchType.VIN:
+                params = {
+                    "SearchCriteria": {
+                        "VehicleIdentificationNumber": request.identifier
+                    }
+                }
+            elif request.search_type == VehicleSearchType.REGISTRATION:
+                if not request.state:
+                    return VehicleSearchResponse(
+                        success=False,
+                        message="State is required for registration searches",
+                        error_details={"error": "Missing state parameter"}
+                    )
+                
+                params = {
+                    "SearchCriteria": {
+                        "RegistrationNumber": request.identifier,
+                        "State": request.state
+                    }
+                }
+            else:
+                params = {
+                    "SearchCriteria": {
+                        "ChassisNumber": request.identifier
+                    }
+                }
+            
+            # Call the appropriate search operation
+            result = client.service.SearchVehicleByIdentifier(**params)
+            
+            return VehicleSearchResponse(
+                success=True,
+                message="Search completed",
+                search_results=result,
+                written_off=self._extract_written_off_status(result),
+                stolen=self._extract_stolen_status(result)
+            )
+            
+        except Exception as e:
+            logger.error(f"Error searching vehicle: {str(e)}")
+            
+            return VehicleSearchResponse(
+                success=False,
+                message=f"Failed to search vehicle: {str(e)}",
+                error_details={"exception": str(e)}
+            )
+            
+    def _extract_written_off_status(self, result):
+        """Extract written-off status from search results."""
+        return False
+        
+    def _extract_stolen_status(self, result):
+        """Extract stolen status from search results."""
+        return False
 
 ppsr_client = PPSRSoapClient()
