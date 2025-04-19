@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { AlertCircle, CheckCircle, AlertTriangle, Car, FileDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import PaymentFormWrapper from '../components/payment/PaymentForm';
 
 const formSchema = z.object({
   search_type: z.enum(['VIN', 'Chassis', 'Registration']),
@@ -29,6 +30,7 @@ const VehicleSearchPage: React.FC = () => {
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<VehicleSearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -92,7 +94,7 @@ const VehicleSearchPage: React.FC = () => {
       document.body.removeChild(a);
     } catch (err: any) {
       if (err.response?.status === 402) {
-        setError('Payment required: You need to complete payment to download this PDF report. Click the "Download PDF Report" button to initiate payment.');
+        setShowPaymentForm(true);
       } else {
         setError('Failed to generate PDF report: ' + (err.message || 'Unknown error'));
       }
@@ -100,21 +102,65 @@ const VehicleSearchPage: React.FC = () => {
       setIsPdfLoading(false);
     }
   };
+  
+  const handlePaymentSuccess = async () => {
+    setShowPaymentForm(false);
+    setIsPdfLoading(true);
+    
+    try {
+      const request: VehicleSearchRequest = {
+        search_type: form.getValues().search_type as 'VIN' | 'Chassis' | 'Registration',
+        identifier: form.getValues().identifier,
+        state: form.getValues().state,
+      };
+      
+      const blob = await ppsr.downloadVehiclePdf(request);
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ppsr_vehicle_search_${request.identifier}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      setError('Failed to generate PDF report after payment: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+  
+  const handlePaymentCancel = () => {
+    setShowPaymentForm(false);
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8 text-center">Vehicle Search</h1>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Search Parameters</CardTitle>
-              <CardDescription>
-                Search for vehicle details in the PPSR
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+      {showPaymentForm ? (
+        <div className="max-w-md mx-auto">
+          <PaymentFormWrapper 
+            searchId={form.getValues().identifier}
+            searchType={form.getValues().search_type}
+            state={form.getValues().state}
+            onPaymentSuccess={handlePaymentSuccess}
+            onCancel={handlePaymentCancel}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Search Parameters</CardTitle>
+                <CardDescription>
+                  Search for vehicle details in the PPSR
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
               <Alert className="mb-6 bg-blue-50 border-blue-200">
                 <AlertCircle className="h-5 w-5 text-blue-600" />
                 <AlertTitle className="text-blue-800">Test Data Available</AlertTitle>
@@ -345,6 +391,7 @@ const VehicleSearchPage: React.FC = () => {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };

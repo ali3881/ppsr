@@ -36,6 +36,30 @@ export interface VehicleSearchResponse {
   stolen?: boolean;
 }
 
+export interface PaymentIntentRequest {
+  search_id: string;
+  search_type: string;
+  state?: string;
+}
+
+export interface PaymentIntentResponse {
+  client_secret: string;
+  payment_intent_id: string;
+  amount: number;
+  currency: string;
+}
+
+export interface PaymentConfirmationRequest {
+  payment_intent_id: string;
+  search_id: string;
+}
+
+export interface PaymentConfirmationResponse {
+  confirmed: boolean;
+  status: string;
+  search_id: string;
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
@@ -76,6 +100,16 @@ export const ppsr = {
     const response = await api.post('/api/ppsr/search/vehicle/pdf', data, {
       responseType: 'blob'
     });
+    return response.data;
+  },
+  
+  createPaymentIntent: async (data: PaymentIntentRequest): Promise<PaymentIntentResponse> => {
+    const response = await api.post<PaymentIntentResponse>('/api/ppsr/payment/intent', data);
+    return response.data;
+  },
+  
+  confirmPayment: async (data: PaymentConfirmationRequest): Promise<PaymentConfirmationResponse> => {
+    const response = await api.post<PaymentConfirmationResponse>('/api/ppsr/payment/confirm', data);
     return response.data;
   }
 };
