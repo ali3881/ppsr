@@ -19,7 +19,8 @@ const StatusPage: React.FC = () => {
       const response = await ppsr.getStatus();
       setStatus(response);
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to fetch status');
+      console.error('Status fetch error:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to fetch status');
     } finally {
       setLoading(false);
     }
