@@ -60,7 +60,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     const createPaymentIntent = async () => {
       try {
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/ppsr/payment/intent`,
+          `${import.meta.env.VITE_API_URL}/api/ppsr/payment/create-intent`,
           { 
             search_id: searchId,
             search_type: searchType,

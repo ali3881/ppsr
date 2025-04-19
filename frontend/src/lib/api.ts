@@ -104,7 +104,7 @@ export const ppsr = {
   },
   
   createPaymentIntent: async (data: PaymentIntentRequest): Promise<PaymentIntentResponse> => {
-    const response = await api.post<PaymentIntentResponse>('/api/ppsr/payment/intent', data);
+    const response = await api.post<PaymentIntentResponse>('/api/ppsr/payment/create-intent', data);
     return response.data;
   },
   
