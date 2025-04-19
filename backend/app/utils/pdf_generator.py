@@ -115,59 +115,56 @@ def generate_vehicle_search_pdf(
     )
     
     styles = getSampleStyleSheet()
-    styles.add(
-        ParagraphStyle(
-            name='Title',
+    
+    custom_styles = {
+        'PPSRTitle': ParagraphStyle(
+            name='PPSRTitle',
             parent=styles['Heading1'],
             fontSize=14,
             alignment=1,  # Center
             spaceAfter=6
-        )
-    )
-    styles.add(
-        ParagraphStyle(
-            name='Subtitle',
+        ),
+        'PPSRSubtitle': ParagraphStyle(
+            name='PPSRSubtitle',
             parent=styles['Heading2'],
             fontSize=12,
             alignment=1,  # Center
             spaceAfter=12
-        )
-    )
-    styles.add(
-        ParagraphStyle(
+        ),
+        'SectionHeading': ParagraphStyle(
             name='SectionHeading',
             parent=styles['Heading2'],
             fontSize=12,
             spaceAfter=6
-        )
-    )
-    styles.add(
-        ParagraphStyle(
-            name='Normal',
+        ),
+        'PPSRNormal': ParagraphStyle(
+            name='PPSRNormal',
             parent=styles['Normal'],
             fontSize=10,
             spaceAfter=6
-        )
-    )
-    styles.add(
-        ParagraphStyle(
+        ),
+        'Small': ParagraphStyle(
             name='Small',
             parent=styles['Normal'],
             fontSize=8,
             spaceAfter=3
         )
-    )
+    }
+    
+    for style_name, style in custom_styles.items():
+        if style_name not in styles:
+            styles.add(style)
     
     elements = []
     
-    elements.append(Paragraph("PPSR Vehicle Search Certificate", styles['Title']))
+    elements.append(Paragraph("PPSR Vehicle Search Certificate", styles['PPSRTitle']))
     elements.append(Spacer(1, 3*mm))
     
     search_type = search_data.get('search_type', 'VIN')
     elements.append(
         Paragraph(
             f"This is a PPSR search certificate for a {search_type} search",
-            styles['Subtitle']
+            styles['PPSRSubtitle']
         )
     )
     elements.append(Spacer(1, 5*mm))
@@ -198,7 +195,7 @@ def generate_vehicle_search_pdf(
     elements.append(
         Paragraph(
             "This Search certificate is provided under section 174 of the Personal Property Securities Act 2009",
-            styles['Normal']
+            styles['PPSRNormal']
         )
     )
     elements.append(Spacer(1, 10*mm))
@@ -238,7 +235,7 @@ def generate_vehicle_search_pdf(
         elements.append(
             Paragraph(
                 "No matching records were found for this vehicle identifier.",
-                styles['Normal']
+                styles['PPSRNormal']
             )
         )
     else:
@@ -306,13 +303,13 @@ def generate_vehicle_search_pdf(
             "You can use the search number from an original search (as shown on this certificate) "
             "to retrieve the original search results and to issue a copy of the search certificate "
             "at https://transact.ppsr.gov.au/ppsr/Home.",
-            styles['Normal']
+            styles['PPSRNormal']
         )
     )
     elements.append(
         Paragraph(
             "There is no fee, however this process will not provide any update to the information in the original search.",
-            styles['Normal']
+            styles['PPSRNormal']
         )
     )
     elements.append(Spacer(1, 5*mm))
@@ -325,20 +322,20 @@ def generate_vehicle_search_pdf(
             "that we comply with the Australian Privacy Principles (APPs) set out in the Act. The APPs set "
             "out how Australian Government agencies should collect, use, store and disclose personal information "
             "and how individuals can access records containing their personal information.",
-            styles['Normal']
+            styles['PPSRNormal']
         )
     )
     elements.append(
         Paragraph(
             "Access to and use of the PPSR is subject to the General Conditions of Use, as well as other "
             "relevant terms and conditions. All relevant terms and conditions can be found at www.ppsr.gov.au.",
-            styles['Normal']
+            styles['PPSRNormal']
         )
     )
     
     elements.append(PageBreak())
     
-    elements.append(Paragraph("End of search certificate", styles['Normal']))
+    elements.append(Paragraph("End of search certificate", styles['PPSRNormal']))
     elements.append(Spacer(1, 5*mm))
     
     contact_data = [
