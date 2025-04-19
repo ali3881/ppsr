@@ -34,7 +34,7 @@ const VehicleSearchPage: React.FC = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       search_type: 'VIN',
-      identifier: '',
+      identifier: 'WBAAL31090FW12345', // Default to a valid test VIN
       state: '',
     },
   });
@@ -91,7 +91,11 @@ const VehicleSearchPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      setError('Failed to generate PDF report: ' + (err.message || 'Unknown error'));
+      if (err.response?.status === 402) {
+        setError('Payment required: You need to complete payment to download this PDF report. Click the "Download PDF Report" button to initiate payment.');
+      } else {
+        setError('Failed to generate PDF report: ' + (err.message || 'Unknown error'));
+      }
     } finally {
       setIsPdfLoading(false);
     }
@@ -111,6 +115,20 @@ const VehicleSearchPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <Alert className="mb-6 bg-blue-50 border-blue-200">
+                <AlertCircle className="h-5 w-5 text-blue-600" />
+                <AlertTitle className="text-blue-800">Test Data Available</AlertTitle>
+                <AlertDescription className="text-blue-700">
+                  Use these test VINs for mock service:
+                  <ul className="list-disc pl-5 mt-2">
+                    <li>WBAAL31090FW12345 (BMW 318i, encumbered)</li>
+                    <li>JN1TANT31U0123456 (Nissan X-Trail, written-off)</li>
+                    <li>WAUZZZ8K9DA123456 (Audi A4, stolen)</li>
+                  </ul>
+                  For Registration searches, use format: STATE_NUMBER (e.g., NSW_ABC123)
+                </AlertDescription>
+              </Alert>
+              
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
@@ -166,6 +184,7 @@ const VehicleSearchPage: React.FC = () => {
                           <Input 
                             placeholder={`Enter ${searchType.toLowerCase()} number`} 
                             {...field} 
+                            className="font-mono"
                           />
                         </FormControl>
                         <FormMessage />
