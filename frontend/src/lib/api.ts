@@ -42,8 +42,19 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Authorization': 'Basic ' + btoa('user:59ae75b8695daab37e4a75543176b593')
   },
-  withCredentials: true
+  withCredentials: true,
+  timeout: 10000
 });
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.message === 'Network Error') {
+      console.error('Network error detected. API might be unavailable or CORS issues.');
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const ppsr = {
   changePassword: async (data: ChangePasswordRequest): Promise<ChangePasswordResponse> => {
