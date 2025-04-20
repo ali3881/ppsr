@@ -26,7 +26,7 @@ type SearchFormValues = z.infer<typeof searchFormSchema>;
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [autoSearchEnabled, setAutoSearchEnabled] = useState(true);
+  const [autoSearchEnabled] = useState(true);
   
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
