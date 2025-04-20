@@ -18,8 +18,7 @@ const MainLayout: React.FC = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <Link to="/" className="flex items-center">
-                <img src="/images/ppsr-logo.jpg" alt="PPSR Security Check" className="h-10 mr-2" />
-                <span className="text-2xl font-bold">B2G Portal</span>
+                <img src="/images/ppsr-logo.jpg" alt="PPSR Security Check" className="h-10" />
               </Link>
             </div>
             
