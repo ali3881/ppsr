@@ -133,7 +133,7 @@ const MainLayout: React.FC = () => {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} PPSR B2G Portal. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} PPSR Security Check. All rights reserved.</p>
           </div>
         </div>
       </footer>
