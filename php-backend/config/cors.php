@@ -21,6 +21,7 @@ return [
 
     'allowed_origins' => [
         'https://ppsr-soap-client-u0iqe4q3.devinapps.com',
+        'http://ppsr-soap-client-u0iqe4q3.devinapps.com',
         'http://localhost:5173',
         'http://localhost:3000',
         'http://127.0.0.1:5173',

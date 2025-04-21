@@ -67,7 +67,7 @@ const api = axios.create({
     'Authorization': 'Basic ' + btoa('user:59ae75b8695daab37e4a75543176b593')
   },
   withCredentials: true,
-  timeout: 10000
+  timeout: 15000 // Increase timeout to accommodate network latency
 });
 
 api.interceptors.response.use(
