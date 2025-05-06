@@ -142,11 +142,16 @@ class PpsrSoapClient
         return $days_until_expiry < 7;
     }
     
+    /**
+     * Automatically changes the password if it's an initial password
+     * 
+     * @return array Result of the password change operation
+     */
     public function autoChangePassword()
     {
-        $using_initial_password = $this->config->password === '7V9RDKXHMWCR';
+        $is_initial_password = preg_match('/^[A-Z0-9]{12}$/', $this->config->password);
         
-        if (!$using_initial_password) {
+        if (!$is_initial_password) {
             return [
                 'success' => true,
                 'message' => 'Password already changed',
@@ -155,7 +160,7 @@ class PpsrSoapClient
             ];
         }
         
-        $new_password = 'NewPassword123!';
+        $new_password = 'Ppsr' . bin2hex(random_bytes(8)) . '!';
         
         $request = new \stdClass();
         $request->account_number = $this->config->account_number;
@@ -167,9 +172,7 @@ class PpsrSoapClient
         
         if ($result['success']) {
             $this->config->password = $new_password;
-            
             $this->updateEnvFile('PPSR_PASSWORD', $new_password);
-            
             $result['password_changed'] = true;
         }
         

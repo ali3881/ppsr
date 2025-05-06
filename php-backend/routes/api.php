@@ -19,6 +19,17 @@ Route::get('/healthz', function () {
     return response()->json(['status' => 'ok']);
 });
 
+Route::get('/diagnostic', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => date('Y-m-d H:i:s'),
+        'environment' => app()->environment(),
+        'php_version' => PHP_VERSION,
+        'server_info' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
+        'request_headers' => getallheaders()
+    ]);
+});
+
 Route::prefix('ppsr')->group(function () {
     Route::post('/change-password', [PpsrController::class, 'changePassword']);
     Route::get('/status', [PpsrController::class, 'getStatus']);

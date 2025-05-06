@@ -75,6 +75,11 @@ api.interceptors.response.use(
   error => {
     if (error.message === 'Network Error') {
       console.error('Network error detected. API might be unavailable or CORS issues.');
+    } else if (error.response && error.response.status === 400) {
+      console.error('400 Bad Request error:', error.response.data);
+      console.debug('Request URL:', error.config.url);
+      console.debug('Request method:', error.config.method);
+      console.debug('Request data:', error.config.data);
     }
     return Promise.reject(error);
   }
